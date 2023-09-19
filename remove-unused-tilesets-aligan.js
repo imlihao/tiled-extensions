@@ -15,25 +15,68 @@
  * @param {TileMap} map
  */
 function TiledAligan(map) {
-	const usedTilesets = map.usedTilesets();
-	const unusedTilesets = map.tilesets.filter(tileset => !usedTilesets.includes(tileset));
+	let ox = 0;
+	let oy = 0;
+	map.layers.forEach(layer => {
+		tiled.log("-----------------");
+		tiled.log(layer.name);
+		tiled.log(layer.id);
 
-	if (unusedTilesets.length > 0) {
-		tiled.log(`Removing ${unusedTilesets.length} unused tilesets...`);
-		map.macro("Remove Unused Tilesets", function () {
-			for (const t of unusedTilesets)
-				map.removeTileset(t);
-		});
+		if (layer.id == 1) {
+			ox = -layer.offset.x;
+			oy = -layer.offset.y;
+		}
+	})
+
+	map.layers.forEach(layer => {
+		if (layer.id == 1) {
+			layer.offset.x = 0;
+			layer.offset.y = 0;
+			return;
+		}
+		
+		aligan(layer, ox, oy)
+	})
+}
+
+/**
+ * @param {Layer} layer
+ * @param {Number} offx
+ * @param {Number} offy
+ */
+function aligan(layer, offx, offy) {
+	let oox = offx;
+	let ooy = offy;
+	if (layer.isGroupLayer) {
+		let GLayer = (/** @type {GroupLayer} */(layer));
+		// oox += GLayer.offset.x;
+		// ooy += GLayer.offset.y;
+		let subX = oox + GLayer.offset.x;
+		let subY = ooy + GLayer.offset.y;
+		GLayer.offset.x = 0;
+		GLayer.offset.y = 0;
+		GLayer.layers.forEach(layer => {
+			aligan(layer, subX, subY);
+		})
+	} else {
+		if (layer.isObjectLayer) {
+			let objectLayer = (/** @type {ObjectGroup} */(layer));
+			let subX = oox + objectLayer.offset.x;
+			let subY = ooy + objectLayer.offset.y;
+			//set to zero point
+			objectLayer.offset.x = 0;
+			objectLayer.offset.y = 0;
+
+			objectLayer.objects.forEach(object => {
+				object.x += subX;
+				object.y += subY;
+			})
+		}
 	}
 }
 
 const TiledAliganAction = tiled.registerAction("TiledAligan", () => {
 	const map = tiled.activeAsset;
-	if (!map.isTileMap) {
-		tiled.error("Not a tile map!");
-		return;
-	}
-
 	TiledAligan(map);
 });
 TiledAliganAction.text = "对齐";
