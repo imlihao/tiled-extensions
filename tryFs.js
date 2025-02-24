@@ -112,12 +112,28 @@ function getLandOrWater(layer, x, y) {
  * @param {TileLayer} phsLayer 
  */
 function fitWangSet(wangSet, x, y, phsLayer) {
-	let upCode = getLandOrWater(phsLayer, x, y - 1);
-	let downCode = getLandOrWater(phsLayer, x, y + 1);
-	let leftCode = getLandOrWater(phsLayer, x - 1, y);
-	let rightCode = getLandOrWater(phsLayer, x + 1, y);
+	let upCode = getLandOrWater(phsLayer, x - 1, y);
+	let TopRightCode = getLandOrWater(phsLayer, x - 1, y - 1);
+	let rightCode = getLandOrWater(phsLayer, x, y - 1);
+	let BottomRightCode = getLandOrWater(phsLayer, x + 1, y - 1);
+	let downCode = getLandOrWater(phsLayer, x + 1, y);
+	let BottomLeftCode = getLandOrWater(phsLayer, x + 1, y + 1);
+	let leftCode = getLandOrWater(phsLayer, x, y + 1);
+	let TopLeftCode = getLandOrWater(phsLayer, x - 1, y + 1);
 
-	let arr = [0, upCode, 0, downCode, 0, leftCode, 0, rightCode];
+	let myCode = getLandOrWater(phsLayer, x, y);
+
+	let isConer1 = myCode == 1 && upCode == 1 && TopRightCode == 1 && rightCode == 1;
+	let isConer2 = myCode == 1 && rightCode == 1 && BottomRightCode == 1 && downCode == 1;
+	let isConer3 = myCode == 1 && downCode == 1 && BottomLeftCode == 1 && leftCode == 1;
+	let isConer4 = myCode == 1 && leftCode == 1 && TopLeftCode == 1 && upCode == 1;
+
+	let coner1Code = isConer1 ? 1 : 2;
+	let coner2Code = isConer2 ? 1 : 2;
+	let coner3Code = isConer3 ? 1 : 2;
+	let coner4Code = isConer4 ? 1 : 2;
+
+	let arr = [0, coner2Code, 0, coner3Code, 0, coner4Code, 0, coner1Code];
 
 	let tileSet = wangSet.tileset;
 	let arrRes = [];
@@ -145,7 +161,7 @@ let jumpToObject = tiled.registerAction("tryFs", function (/* action */) {
 	}
 	autoFixPhsLayer(map);
 });
-jumpToObject.text = "Try FS";
+jumpToObject.text = "用water";
 
 
 tiled.extendMenu("Map", [
