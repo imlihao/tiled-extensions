@@ -264,40 +264,40 @@ tiled.extendMenu("Map", [
 ]);
 
 
-function saveToFile(content, filename) {
-    try {
-        // 创建文件对象
-        let file = new TextFile(filename, TextFile.WriteOnly);
+// function saveToFile(content, filename) {
+//     try {
+//         // 创建文件对象
+//         let file = new TextFile(filename, TextFile.WriteOnly);
         
-        // 写入内容
-        file.write(content);
+//         // 写入内容
+//         file.write(content);
         
-        // 关闭文件
-        file.commit();
+//         // 关闭文件
+//         file.commit();
         
-        tiled.log(`文件已保存: ${filename}`);
-        return true;
-    } catch (e) {
-        tiled.error(`保存文件失败: ${e}`);
-        return false;
-    }
-}
+//         tiled.log(`文件已保存: ${filename}`);
+//         return true;
+//     } catch (e) {
+//         tiled.error(`保存文件失败: ${e}`);
+//         return false;
+//     }
+// }
 
-// 注册一个动作来测试文件保存
-let saveAction = tiled.registerAction("SaveTest", function(/* action */) {
-    // 示例：保存一些内容到文件
-    const content = "这是测试内容\n第二行";
-    const filename = "/Users/lihao/Desktop/test.txt";
+// // 注册一个动作来测试文件保存
+// let saveAction = tiled.registerAction("SaveTest", function(/* action */) {
+//     // 示例：保存一些内容到文件
+//     const content = "这是测试内容\n第二行";
+//     const filename = "/Users/lihao/Desktop/test.txt";
     
-    if (saveToFile(content, filename)) {
-        tiled.alert("文件保存成功！");
-    }
-});
+//     if (saveToFile(content, filename)) {
+//         tiled.alert("文件保存成功！");
+//     }
+// });
 
-saveAction.text = "保存测试文件";
+// saveAction.text = "保存测试文件";
 
-// 添加到菜单
-tiled.extendMenu("File", [
-    { separator: true },
-    { action: "SaveTest" }
-]);
+// // 添加到菜单
+// tiled.extendMenu("File", [
+//     { separator: true },
+//     { action: "SaveTest" }
+// ]);
