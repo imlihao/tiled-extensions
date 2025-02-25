@@ -74,7 +74,7 @@ function autoFixPhsLayer(map) {
 
 	for (let y = 0; y < landLayer.height; y++) {
 		for (let x = 0; x < landLayer.width; x++) {
-			let tile = fitWangSet(wangSet[1], x, y, phsLayer);
+			let tile = fitWangSetConer(wangSet[1], x, y, phsLayer);
 			edit.setTile(x
 				, y
 				, tile);
@@ -99,7 +99,7 @@ function autoFixPhsLayerWithSlice(map) {
 
 	map.tilesets.forEach(v => {
 		tiled.log(v.name);
-		if (v.name === "isometric_grass_and_water") {
+		if (v.name === "ground") {
 			tileSet = v;
 			wangSet = tileSet.wangSets;
 		}
@@ -114,9 +114,21 @@ function autoFixPhsLayerWithSlice(map) {
 			tiled.log("tileId:" + tile.id + ",wangId:" + wangId.toString() + "==" + curWang.name);
 		}
 		tiled.log("==============" + i);
-
 	}
 
+	
+	let landRiverSlice = wangSet.find(v => v.name === "landRiverSlice");
+	let landConer = wangSet.find(v => v.name === "landConer");
+
+	if(!landRiverSlice || !landConer){
+		if(!landRiverSlice){
+			tiled.error("No landRiverSlice wangSet found!");
+		}
+		if(!landConer){
+			tiled.error("No landConer wangSet found!");
+		}
+		return;
+	}
 
 	/**
 	 * @type {TileLayer}
@@ -148,14 +160,14 @@ function autoFixPhsLayerWithSlice(map) {
 
 	for (let y = 0; y < landLayer.height; y++) {
 		for (let x = 0; x < landLayer.width; x++) {
-			let tile = fitWangSet(wangSet[1], x, y, phsLayer);
+			let tile = fitWangSetConer(landConer, x, y, phsLayer);
+			// tile = landRiverSlice.tileset.tile(0);
 			edit.setTile(x
 				, y
 				, tile);
 		}
 	}
 
-	tiled.log("Done!");
 	tiled.log("Done!");
 	edit.apply();
 	tiled.log("Appled!");
@@ -185,7 +197,7 @@ function getLandOrWater(layer, x, y) {
  * @param number y 
  * @param {TileLayer} phsLayer 
  */
-function fitWangSet(wangSet, x, y, phsLayer) {
+function fitWangSetConer(wangSet, x, y, phsLayer) {
 	let upCode = getLandOrWater(phsLayer, x - 1, y);
 	let TopRightCode = getLandOrWater(phsLayer, x - 1, y - 1);
 	let rightCode = getLandOrWater(phsLayer, x, y - 1);
@@ -226,7 +238,44 @@ function fitWangSet(wangSet, x, y, phsLayer) {
 	return null;
 }
 
-function doFs(layer, x, y) {
+
+/**
+ * 
+ * @param {WangSet} wangSet 
+ * @param {number} x 
+ * @param number y 
+ * @param {TileLayer} phsLayer 
+ */
+function fitWangSetEdge(wangSet, x, y, phsLayer) {
+	let upCode = getLandOrWater(phsLayer, x - 1, y);
+	let TopRightCode = getLandOrWater(phsLayer, x - 1, y - 1);
+	let rightCode = getLandOrWater(phsLayer, x, y - 1);
+	let BottomRightCode = getLandOrWater(phsLayer, x + 1, y - 1);
+	let downCode = getLandOrWater(phsLayer, x + 1, y);
+	let BottomLeftCode = getLandOrWater(phsLayer, x + 1, y + 1);
+	let leftCode = getLandOrWater(phsLayer, x, y + 1);
+	let TopLeftCode = getLandOrWater(phsLayer, x - 1, y + 1);
+
+	let myCode = getLandOrWater(phsLayer, x, y);
+
+	let arr = [rightCode,0,downCode,0, leftCode,0, upCode,0];
+	// let arr = [1,0,1,0, 1,0, 1];
+
+	let tileSet = wangSet.tileset;
+	let arrRes = [];
+	for (let i = 0; i < tileSet.tileCount; i++) {
+		const tile = tileSet.tile(i);
+		if (!tile) continue;
+		let wangId = wangSet.wangId(tile);
+		if (wangId.toString() == arr.toString()) {
+			arrRes.push(tile)
+		}
+	}
+	if (arrRes.length > 0) {
+		//random
+		return arrRes[Math.floor(Math.random() * arrRes.length)];
+	}
+	return null;
 }
 
 
@@ -262,6 +311,8 @@ tiled.extendMenu("Map", [
 	{ separator: true },
 	{ action: "paintWithSlice" },
 ]);
+
+
 
 
 // function saveToFile(content, filename) {
