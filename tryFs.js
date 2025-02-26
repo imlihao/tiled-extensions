@@ -313,42 +313,93 @@ tiled.extendMenu("Map", [
 ]);
 
 
+//#region  导出城市数据到csv
 
+function saveCSV(data, filename) {
+    try {
+        // 添加 UTF-8 BOM，确保 Excel 正确识别中文
+        const bom = '\ufeff';
+        // 将数组转换为 CSV 格式
+        const csvContent = bom + data.map(row => 
+            row.map(cell => {
+                if (cell === null || cell === undefined) return '';
+                return `"${cell.toString().replace(/"/g, '""')}"`
+            }).join(',')
+        ).join('\n');
+        
+        let file = new TextFile(filename, TextFile.WriteOnly);
+        file.codec = 'UTF-8';
+        file.write(csvContent);
+        file.commit();
+        
+        return true;
+    } catch (e) {
+        tiled.error(`保存CSV失败: ${e}`);
+        return false;
+    }
+}
 
-// function saveToFile(content, filename) {
-//     try {
-//         // 创建文件对象
-//         let file = new TextFile(filename, TextFile.WriteOnly);
-        
-//         // 写入内容
-//         file.write(content);
-        
-//         // 关闭文件
-//         file.commit();
-        
-//         tiled.log(`文件已保存: ${filename}`);
-//         return true;
-//     } catch (e) {
-//         tiled.error(`保存文件失败: ${e}`);
-//         return false;
-//     }
-// }
+function collectBuildingData(map) {
+    // 获取建筑层
+    const buildingLayer = map.layers.find(layer => layer.name === "building");
+    if (!buildingLayer) {
+        tiled.error("未找到building层!");
+        return null;
+    }
 
-// // 注册一个动作来测试文件保存
-// let saveAction = tiled.registerAction("SaveTest", function(/* action */) {
-//     // 示例：保存一些内容到文件
-//     const content = "这是测试内容\n第二行";
-//     const filename = "/Users/lihao/Desktop/test.txt";
+    // 准备数据，添加表头
+    const data = [['建筑名称', '道路目标']];
+	
+	tiled.log(buildingLayer.objects.length);
+    // 遍历所有对象
+    buildingLayer.objects.forEach(obj => {
+        const roads = [];
+        
+        // 遍历对象的所有属性
+        for (const [key, value] of Object.entries(obj.properties)) {
+			tiled.log(key+":"+ value);
+
+            if (key.startsWith('road')) {
+                roads.push(value);
+				
+            }
+        }
+		tiled.log(obj.name);
+        // 添加到数据数组
+        data.push([
+            obj.name || '',
+            roads.join(';') // 用分号分隔多个道路目标
+        ]);
+    });
+
+    return data;
+}
+
+// 注册保存建筑数据的动作
+let saveBuildingCSVAction = tiled.registerAction("SaveBuildingCSV", function(/* action */) {
+    const map = tiled.activeAsset;
+    if (!map.isTileMap) {
+        tiled.error("不是地图文件!");
+        return;
+    }
+
+    const data = collectBuildingData(map);
+    if (!data) return;
+
+    // 生成文件名（包含时间戳）
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `/Users/lihao/Desktop/building_data_${timestamp}.csv`;
     
-//     if (saveToFile(content, filename)) {
-//         tiled.alert("文件保存成功！");
-//     }
-// });
+    if (saveCSV(data, filename)) {
+        tiled.alert("建筑数据已导出为CSV文件！");
+    }
 
-// saveAction.text = "保存测试文件";
+});
 
-// // 添加到菜单
-// tiled.extendMenu("File", [
-//     { separator: true },
-//     { action: "SaveTest" }
-// ]);
+saveBuildingCSVAction.text = "导出建筑数据";
+
+// 添加到菜单
+tiled.extendMenu("Map", [
+    { separator: true },
+    { action: "SaveBuildingCSV" }
+]);
